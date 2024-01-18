@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include guillaumeseren.ansible_role_package"
+      ansible.builtin.include_role:
+        name: "guillaumeseren.ansible_role_package"
