@@ -4,8 +4,14 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: instance
+  - name: centos-stream8
     image: quay.io/centos/centos:stream8
+    pre_build_image: true
+  - name: debian-bookworm
+    image: python:bookworm
+    pre_build_image: true
+  - name: gentoo-stage3-systemd
+    image: gentoo/stage3:systemd
     pre_build_image: true
 provisioner:
   name: ansible
