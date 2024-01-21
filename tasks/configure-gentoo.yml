@@ -1,0 +1,37 @@
+---
+- name: Check that package.* are directory
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/portage/package.accept_keywords
+    - /etc/portage/package.env
+    - /etc/portage/package.license
+    - /etc/portage/package.mask
+    - /etc/portage/package.unmask
+    - /etc/portage/package.use
+    - /etc/portage/repos.conf
+    - /etc/portage/repo.postsync.d
+  when:
+    - ansible_os_family == 'Gentoo'
+
+- name: Check eix auto-sync file
+  template:
+    src: etc/portage/repo.postsync.d/eix
+    dest: /etc/portage/repo.postsync.d/eix
+    mode: 0755
+  when: ansible_os_family == 'Gentoo'
+
+- name: Check egencache file
+  template:
+    src: etc/portage/repo.postsync.d/egencache
+    dest: /etc/portage/repo.postsync.d/egencache
+    mode: 0755
+  when: ansible_os_family == 'Gentoo'
+
+- name: Get location of the PORTDIR
+  command:  portageq get_repo_path / gentoo
+  register: cmd_portageq_portdir
+  changed_when: False
+  failed_when: cmd_portageq_portdir.rc != 0
+  when: ansible_os_family == 'Gentoo'
