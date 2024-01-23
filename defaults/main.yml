@@ -1,2 +1,4 @@
 ---
 # defaults file for docker
+pkg_sync_period: '2 days ago'
+pkg_sync_period_mirror: '7 days ago'

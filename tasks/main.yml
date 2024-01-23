@@ -12,3 +12,25 @@
 - name: configure gentoo
   include_tasks: configure-gentoo.yml
   when: ansible_os_family == 'Gentoo'
+
+- name: Get non mirror period timestamp
+  command: date -d "{{ pkg_sync_period }}" +%s
+  register: pkg_timestamp
+  changed_when: False
+  failed_when: pkg_timestamp.rc != 0
+  when:
+    - "'pkg_mirror' not in group_names"
+    - not ansible_check_mode
+
+- name: Get mirror period timestamp
+  command: date -d '{{ pkg_sync_period_mirror }}' +%s
+  register: pkg_timestamp_mirror
+  changed_when: False
+  failed_when: pkg_timestamp_mirror.rc != 0
+  when:
+    - "'pkg_mirror' in group_names"
+    - not ansible_check_mode
+
+- name: update cache Debian
+  include_tasks: package-update-debian.yml
+  when: ansible_os_family == 'Debian'
