@@ -8,6 +8,7 @@
     - ansible_os_family == 'Debian'
     - not ansible_check_mode
 
+# @TODO Add case for non initialized db
 - name: Date debug Debian non-mirror
   debug:
     msg:
@@ -25,7 +26,7 @@
     msg:
       - "To update apt_update_date_ should be older (<) than pkg_timestamp_mirror"
       - "                     |  timestamp   | date"
-      - "pkg_timestamp_mirror |  {{ pkg_timestamp.stdout }}  | {{ pkg_sync_period }}"
+      - "pkg_timestamp_mirror |  {{ pkg_timestamp_mirror.stdout }}  | {{ pkg_sync_period }}"
       - "apt_update_date      |  {{ apt_update_date.stdout }} "
   when:
     - ansible_os_family == 'Debian'

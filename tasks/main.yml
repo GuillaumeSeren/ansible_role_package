@@ -9,3 +9,7 @@
 - name: update cache Debian
   include_tasks: package-update-debian.yml
   when: ansible_os_family == 'Debian'
+
+- name: update cache Gentoo
+  include_tasks: package-update-gentoo.yml
+  when: ansible_os_family == 'Gentoo'
