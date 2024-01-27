@@ -1,0 +1,73 @@
+---
+- name: check if timestamp file exist
+  stat:
+    path: "{{ cmd_portageq_portdir.stdout }}/metadata/timestamp.chk"
+  register: portage_timestamp
+
+- name: Get last sync date
+  command: stat -c %Y "{{ cmd_portageq_portdir.stdout }}/metadata/timestamp.chk"
+  register: portage_date
+  changed_when: False
+  failed_when: portage_date.rc != 0
+  when:
+    - ansible_os_family == 'Gentoo'
+    - portage_timestamp.stat.exist is defined and portage_timestamp.stat.exist is true
+    - not ansible_check_mode
+
+- debug:
+    msg:
+      - "Package cache db seems not initialized"
+      - "path:"
+      - "{{ cmd_portageq_portdir.stdout }}/metadata/timestamp.chk"
+      - "stat:"
+      - "{{ portage_timestamp.stat }}"
+  when:
+    - portage_timestamp.stat is defined and portage_timestamp.stat.exists is false
+
+- name: Date debug Gentoo non-mirror
+  debug:
+    msg:
+      - "To update portage_timestamp should be older (<) than pkg_timestamp"
+      - "                     |  timestamp   | date"
+      - "pkg_timestamp        |  {{ pkg_timestamp.stdout }}  | {{ pkg_sync_period }}"
+      - "portage_timestamp    |  {{ portage_timestamp }}"
+  when:
+    - ansible_os_family == 'Gentoo'
+    - "'pkg_mirror' not in group_names"
+    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_mirror.stdout | int()) or
+      portage_timestamp.stat is defined and portage_timestamp.stat.exists is true
+    - not ansible_check_mode
+
+- name: Date debug Gentoo mirror
+  debug:
+    msg:
+      - "To update portage_timestamp should be older (<) than pkg_timestamp_mirror"
+      - "                     |  timestamp   | date"
+      - "pkg_timestamp_mirror |  {{ pkg_timestamp_mirror.stdout }}  | {{ pkg_sync_period_mirror }}"
+      - "portage_timestamp    |  {{ portage_timestamp }}"
+  when:
+    - ansible_os_family == 'Gentoo'
+    - "'pkg_mirror' in group_names"
+    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp.stdout | int()) or
+      portage_timestamp.stat is defined and portage_timestamp.stat.exists is true
+    - not ansible_check_mode
+
+- name: Portage sync non-mirror
+  command: emerge --sync
+  when:
+    - ansible_os_family == 'Gentoo'
+    - "'pkg_mirror' not in group_names"
+    - pkg_timestamp.stdout is defined
+    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp.stdout | int()) or
+      portage_timestamp.stat is defined and portage_timestamp.stat.exists is false
+    - not ansible_check_mode
+
+- name: Portage sync mirror
+  command: emerge --sync
+  when:
+    - ansible_os_family == 'Gentoo'
+    - "'pkg_mirror' in group_names"
+    - pkg_timestamp.stdout is defined
+    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_miror.stdout | int()) or
+      portage_timestamp.stat is defined and portage_timestamp.stat.exists is false
+    - not ansible_check_mode
