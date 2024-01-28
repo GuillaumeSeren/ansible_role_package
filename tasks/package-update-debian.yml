@@ -1,52 +1,73 @@
 ---
+- name: check if timestamp file exist
+  stat:
+    path: "/var/lib/apt/lists"
+  register: apt_timestamp
+
 - name: Get last sync date
   command: stat -c %Y /var/lib/apt/lists
-  register: apt_update_date
+  register: apt_update
   changed_when: False
-  failed_when: apt_update_date.rc != 0
+  failed_when: apt_update.rc != 0
   when:
     - ansible_os_family == 'Debian'
+    - apt_timestamp.stat.exist is defined and apt_timestamp.stat.exist is true
     - not ansible_check_mode
 
-# @TODO Add case for non initialized db
+- debug:
+    msg:
+      - "Package cache db seems not initialized"
+      - "path:"
+      - "/var/lib/apt/lists"
+      - "stat:"
+      - "{{ apt_timestamp.stat }}"
+  when:
+    - apt_timestamp.stat is defined and apt_timestamp.stat.exists is false
+
 - name: Date debug Debian non-mirror
   debug:
     msg:
-      - "To update apt_update_date should be older (<) than pkg_timestamp"
+      - "To update apt_update should be older (<) than pkg_timestamp"
       - "                     |  timestamp   | date"
       - "pkg_timestamp        |  {{ pkg_timestamp.stdout }}  | {{ pkg_sync_period }}"
-      - "apt_update_date      |  {{ apt_update_date.stdout }} "
+      - "apt_update           |  {{ apt_update.stdout }} "
   when:
     - ansible_os_family == 'Debian'
     - "'pkg_mirror' not in group_names"
+    - apt_update.stdout is defined and apt_update.stdout | int() <= pkg_timestamp.stdout | int()
+    - apt_timestamp.stat is defined and apt_timestamp.stat.exists is true
     - not ansible_check_mode
 
 - name: Date debug Debian mirror
   debug:
     msg:
-      - "To update apt_update_date_ should be older (<) than pkg_timestamp_mirror"
+      - "To update apt_update_ should be older (<) than pkg_timestamp_mirror"
       - "                     |  timestamp   | date"
       - "pkg_timestamp_mirror |  {{ pkg_timestamp_mirror.stdout }}  | {{ pkg_sync_period }}"
-      - "apt_update_date      |  {{ apt_update_date.stdout }} "
+      - "apt_update           |  {{ apt_update.stdout }} "
   when:
     - ansible_os_family == 'Debian'
     - "'pkg_mirror' in group_names"
+    - apt_update.stdout is defined and apt_update.stdout | int() <= pkg_timestamp.stdout | int()
+    - apt_timestamp.stat is defined and apt_timestamp.stat.exists is true
     - not ansible_check_mode
 
 - name: Apt sync non mirror
   command: apt update
   when:
     - ansible_os_family == 'Debian'
-    - pkg_timestamp.stdout is defined
-    - apt_update_date.stdout is defined and apt_update_date.stdout | int() <= pkg_timestamp.stdout | int()
     - "'pkg_mirror' not in group_names"
+    - pkg_timestamp.stdout is defined
+    - (apt_update.stdout is defined and apt_update.stdout | int() <= pkg_timestamp.stdout | int()) or
+      apt_timestamp.stat is defined and apt_timestamp.stat.exists is false
     - not ansible_check_mode
 
 - name: Apt sync mirror
   command: apt update
   when:
     - ansible_os_family == 'Debian'
-    - pkg_timestamp_mirror.stdout is defined
-    - (apt_update_date.stdout is defined and apt_update_date.stdout | int() <= pkg_timestamp_mirror.stdout | int())
     - "'pkg_mirror' in group_names"
+    - pkg_timestamp_mirror.stdout is defined
+    - (apt_update.stdout is defined and apt_update.stdout | int() <= pkg_timestamp.stdout | int()) or
+      apt_timestamp.stat is defined and apt_timestamp.stat.exists is false
     - not ansible_check_mode
