@@ -30,12 +30,13 @@
       - "To update portage_timestamp should be older (<) than pkg_timestamp"
       - "                     |  timestamp   | date"
       - "pkg_timestamp        |  {{ pkg_timestamp.stdout }}  | {{ pkg_sync_period }}"
-      - "portage_timestamp    |  {{ portage_timestamp }}"
+      - "portage_date         |  {{ portage_date.stdout }}"
   when:
     - ansible_os_family == 'Gentoo'
     - "'pkg_mirror' not in group_names"
-    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_mirror.stdout | int()) or
-      portage_timestamp.stat is defined and portage_timestamp.stat.exists is true
+    - portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_mirror.stdout | int()
+    # Issue you can't compare file.stats.stdout on unexistant file
+    - portage_timestamp.stat is defined and portage_timestamp.stat.exists is true
     - not ansible_check_mode
 
 - name: Date debug Gentoo mirror
@@ -44,12 +45,12 @@
       - "To update portage_timestamp should be older (<) than pkg_timestamp_mirror"
       - "                     |  timestamp   | date"
       - "pkg_timestamp_mirror |  {{ pkg_timestamp_mirror.stdout }}  | {{ pkg_sync_period_mirror }}"
-      - "portage_timestamp    |  {{ portage_timestamp }}"
+      - "portage_date         |  {{ portage_date.stdout }}"
   when:
     - ansible_os_family == 'Gentoo'
     - "'pkg_mirror' in group_names"
-    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp.stdout | int()) or
-      portage_timestamp.stat is defined and portage_timestamp.stat.exists is true
+    - portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_mirror.stdout | int()
+    - portage_timestamp.stat is defined and portage_timestamp.stat.exists is true
     - not ansible_check_mode
 
 - name: Portage sync non-mirror
@@ -58,7 +59,7 @@
     - ansible_os_family == 'Gentoo'
     - "'pkg_mirror' not in group_names"
     - pkg_timestamp.stdout is defined
-    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp.stdout | int()) or
+    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_mirror.stdout | int()) or
       portage_timestamp.stat is defined and portage_timestamp.stat.exists is false
     - not ansible_check_mode
 
@@ -68,6 +69,6 @@
     - ansible_os_family == 'Gentoo'
     - "'pkg_mirror' in group_names"
     - pkg_timestamp.stdout is defined
-    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_miror.stdout | int()) or
+    - (portage_date.stdout is defined and portage_date.stdout | int() <= pkg_timestamp_mirror.stdout | int()) or
       portage_timestamp.stat is defined and portage_timestamp.stat.exists is false
     - not ansible_check_mode
