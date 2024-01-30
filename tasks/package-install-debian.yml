@@ -1,0 +1,28 @@
+---
+  - name: install packages Debian package_fact deps
+    apt:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - python3-apt
+    when:
+      - ansible_os_family == 'Debian'
+
+  - name: Check package are install-able Debian
+    command: apt install --dry-run "{{ item.value.name }}"
+    loop: "{{ pkg_install | dict2items }}"
+    register: cmd_emerge_pretend
+    changed_when: False
+    failed_when: cmd_emerge_pretend.rc != 0
+    when:
+      - ansible_os_family == 'Debian'
+      - item.value.name is defined
+
+  - name: install packages Debian
+    apt:
+      name: "{{ item.value.name }}"
+      state: latest
+    loop: "{{ pkg_install | dict2items }}"
+    when:
+      - ansible_os_family == 'Debian'
+      - item.value.name is defined
