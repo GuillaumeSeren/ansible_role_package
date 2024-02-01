@@ -6,6 +6,10 @@
 - name: Get default sync period
   include_tasks: get-default-sync-period.yml
 
+- name: Manage source.list
+  include_tasks: manage-source-list-debian.yml
+  when: ansible_os_family == 'Debian'
+
 - name: update cache Debian
   include_tasks: package-update-debian.yml
   when: ansible_os_family == 'Debian'
