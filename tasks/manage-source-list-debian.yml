@@ -1,0 +1,11 @@
+---
+# Here we want to manage the source.list
+# - the default sources.list for your debian version
+# - maybe a newer debian version
+# - maybe some backport
+# - maybe also a ppa for some package, might need a key
+#
+# Checks:
+# - No duplicate of source server
+# - To avoid duplication we want to convert a version name with a list of servers
+#
